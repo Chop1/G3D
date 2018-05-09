@@ -1,0 +1,5 @@
+QMAKE_PRL_BUILD_DIR = /adhome/a/ad/adrmeyer/L3S6/G3D/build-geom3D-Unnamed-Release/OGLRender
+QMAKE_PRO_INPUT = OGLRender.pro
+QMAKE_PRL_TARGET = libOGLRender.so.1.0.0
+QMAKE_PRL_CONFIG = include_source_dir lex yacc warn_on uic resources qt warn_on release incremental link_prl gdb_dwarf_index shared def_files_disabled exceptions no_mocdepend release stl qt_no_framework dynamiclib shared create_prl dll shared moc thread opengl
+QMAKE_PRL_VERSION = 1.0.0
