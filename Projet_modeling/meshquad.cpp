@@ -152,6 +152,11 @@ Vec3 MeshQuad::normal_of(const Vec3& A, const Vec3& B, const Vec3& C)
     return res;
 }
 
+Vec3 MeshQuad::vecOf(const Vec3& A, const Vec3& B)
+{
+    return Vec3(B.x-A.x, B.y-A.y, B.z-A.z);
+}
+
 
 bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, const Vec3& C, const Vec3& D)
 {
@@ -160,6 +165,17 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
 	// P est-il au dessus des 4 plans contenant chacun la normale au quad et une arete AB/BC/CD/DA ?
 	// si oui il est dans le quad
 
+
+    // normal of quad: cross product of the 2 diago
+
+    Vec3 centroide((A.x+B.x+C.x+D.x)/4, (A.y+B.y+C.y+D.y)/4, (A.z+B.z+C.z+D.z)/4);
+
+    Vec3 normal(centroide, normal_of(centroide, A, B), normal_of(centroide, C, D));
+
+    Vec3 AB = vecOf(A, B);
+    Vec3 BC = vecOf(B, C);
+    Vec3 CD = vecOf(C, D);
+    Vec3 DA = vecOf(D, A);
 
 
     return true;

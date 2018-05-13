@@ -197,6 +197,8 @@ public:
 	void draw(const Vec3& color);
 
 
+private:
+    Vec3 vecOf(const Vec3 &A, const Vec3 &B);
 };
 
 #endif // MESHTRI_H
