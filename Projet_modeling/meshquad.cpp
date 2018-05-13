@@ -92,6 +92,7 @@ void MeshQuad::bounding_sphere(Vec3& C, float& R)
 	// C=
     // centre de gravité (m de tout les points entre eux)
     // note: pas minimum
+    // TODO remplacer les valeurs par defaut
     C = {0, 0, 0};
 
 	// R=
@@ -140,7 +141,15 @@ Vec3 MeshQuad::normal_of(const Vec3& A, const Vec3& B, const Vec3& C)
 	// le produit vectoriel n'est pas commutatif U ^ V = - V ^ U
 	// ne pas oublier de normaliser le resultat.
 
-	return Vec3();
+    int X = (B.y-A.y)*(C.z-A.z) - (B.z-A.z)*(C.y-A.y);
+    int Y = (B.z-A.z)*(C.x-A.x) - (B.x-A.x)*(C.z-A.z);
+    int Z = (B.x-A.x)*(C.y-A.y) - (B.y-A.y)*(C.x-A.x);
+
+    Vec3 res(X, Y, Z);
+
+    res = normalize(res);
+
+    return res;
 }
 
 
@@ -150,6 +159,8 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
 
 	// P est-il au dessus des 4 plans contenant chacun la normale au quad et une arete AB/BC/CD/DA ?
 	// si oui il est dans le quad
+
+
 
     return true;
 }
