@@ -199,6 +199,7 @@ public:
 
 private:
     Vec3 vecOf(const Vec3 &A, const Vec3 &B);
+    Vec3 param2Cartesian(const Vec3 &AX, const Vec3 &AY, const Vec3 &AZ);
 };
 
 #endif // MESHTRI_H
