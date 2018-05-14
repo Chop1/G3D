@@ -202,6 +202,7 @@ private:
     Vec3 param2Cartesian(const Vec3 &AX, const Vec3 &AY, const Vec3 &AZ);
     bool is_points_in_tri(const Vec3 &P, const Vec3 &A, const Vec3 &B, const Vec3 &C);
     double dot(const Vec3 &A, const Vec3 &B);
+    double norm(const Vec3 &u);
 };
 
 #endif // MESHTRI_H

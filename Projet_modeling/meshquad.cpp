@@ -95,9 +95,27 @@ void MeshQuad::bounding_sphere(Vec3& C, float& R)
     // TODO remplacer les valeurs par defaut
     C = {0, 0, 0};
 
+    Vec3 centre(0,0,0);
+
+    // parcour des points
+    size_t pointSize = m_points.size();
+    for(unsigned int i = 0; i < pointSize; i++)
+    {
+        centre = Vec3(centre.x+m_points[i].x, centre.y+m_points[i].y, centre.z+m_points[i].z);
+    }
+    C = Vec3(centre.x/pointSize, centre.y/pointSize, centre.z/pointSize);
+
 	// R=
     // rayon entre centre et point le plus eloigné
-    R = 10;
+    double max = 0;
+    for(unsigned int i = 0; i < pointSize; i++)
+    {
+        double tmp = std::abs(norm(vecOf(C, m_points[i])));
+        if(tmp > max)
+            max = tmp;
+    }
+
+    R = max;
 }
 
 
@@ -204,7 +222,8 @@ Vec3 MeshQuad::param2Cartesian(const Vec3& AX, const Vec3& AY, const Vec3& AZ)
 */
 
 bool MeshQuad::is_points_in_tri(const Vec3& P, const Vec3& A, const Vec3& B, const Vec3& C)
-{
+{// todo a revoir
+
     // Compute vectors
     Vec3 v0 = vecOf(A, C); // AC
     Vec3 v1 = vecOf(A, B); // AB
@@ -258,10 +277,24 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
 
     return true;
     */
-
+    if (is_points_in_tri(P, A, B, C) || is_points_in_tri(P, D, B, C))
+        std::cout << "P " << P.y << ", " << P.y << ", " << P.z << " dedans" << std::endl;
+    else
+        std::cout << "P " << P.y << ", " << P.y << ", " << P.z << " pas dedans" << std::endl;
     return is_points_in_tri(P, A, B, C) || is_points_in_tri(P, D, B, C);
+/*
+    Vec3 v0 = vecOf(A, B); // AB
+    Vec3 v1 = vecOf(A, D); // AD
 
-   }
+    bool u = ((dot(A, v0) <= dot(P, v0)) && (dot(P, v0) <= dot(B, v0 )));
+
+    bool v = ((dot(A, v1) <= dot(P, v1)) && (dot(P, v1) <= dot(D, v1 )));
+
+       if(u && v)
+           std::cout << "dedans" << std::endl;
+    return u && v;
+    */
+}
 
 bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& inter)
 {
@@ -269,6 +302,8 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
     // q * 4 -1 = indice dans m_quad_indices du premier indice
 
     int a = q * 4;
+    if(a=0)
+        a++;
 
     int ind1 = m_quad_indices[a-1];
     int ind2 = m_quad_indices[a];
@@ -282,6 +317,11 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
     Vec3 p3 = m_points[ind3];
     Vec3 p4 = m_points[ind4];
 
+    if(!is_points_in_quad(P, p1, p2, p3, p4))
+        return false;
+
+    std::cout << "quad " << q << " contient le point" << std::endl;
+
 	// calcul de l'equation du plan (N+d)
     Vec3 normal = normal_of(p1, p2, p3);
     double d = - (normal.x*p4.x + normal.y*p4.y + normal.z*p4.z);
@@ -292,7 +332,7 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
     double denom = dot(normal, Dir);
     if (std::abs(denom) > 0.0001f) // un epsilon (0 serait parallel au plan)
     {
-        float t = dot(vecOf(p1, P), normal) / denom;
+        double t = dot(vecOf(p1, P), normal) / denom;
 
         // alpha => calcul de I // mettre dans inter
         inter = Vec3(P.x + t * Dir.x, P.y + t * Dir.y, P.z + t * Dir.z);
@@ -307,6 +347,10 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
     return false;
 }
 
+double MeshQuad::norm(Vec3 const& u)
+{
+    return std::sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
+}
 
 int MeshQuad::intersected_closest(const Vec3& P, const Vec3& Dir)
 {
@@ -315,8 +359,26 @@ int MeshQuad::intersected_closest(const Vec3& P, const Vec3& Dir)
 	// on garde le plus proche (de P)
 
 	int inter = -1;
+    Vec3 pInter;
 
-	return inter;
+    // parcour des quads
+    size_t quadSize = m_quad_indices.size();
+    std::cout << "nbr quad: " << quadSize << std::endl;
+    for(unsigned int i = 0; i < quadSize; i+=4)
+    {
+//        std::cout << "test " << i << std::endl;
+//        std::cout << "inter: " << inter << std::endl;
+        if((inter == -1) && intersect_ray_quad(P, Dir, i, pInter)) // abs t >=0
+        {
+            inter = i;
+        }
+
+        else if(intersect_ray_quad(P, Dir, i, pInter) && norm(vecOf(P, pInter)) < inter)
+        {
+            inter = i;
+        }
+    }
+    return inter;
 }
 
 

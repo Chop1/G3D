@@ -71,7 +71,10 @@ int main(int argc, char *argv[])
 		{
 			case Qt::Key_C:
 				if (!(mod & Qt::ControlModifier))
+                {
 					mesh.create_cube();
+                    mesh.is_points_in_quad(Vec3(0.2, 0.2, 0), Vec3(1, 0, 0), Vec3(1, 1, 0), Vec3(0, 0, 0), Vec3(1, 0, 0));
+                }
 				break;
 
 			// e extrusion
