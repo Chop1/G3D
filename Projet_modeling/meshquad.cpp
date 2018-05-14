@@ -162,6 +162,7 @@ Vec3 MeshQuad::vecOf(const Vec3& A, const Vec3& B)
     return Vec3(B.x-A.x, B.y-A.y, B.z-A.z);
 }
 
+/*
 // const, a, b on elimine b
 Vec3 MeshQuad::param2Cartesian(const Vec3& AX, const Vec3& AY, const Vec3& AZ)
 {
@@ -200,6 +201,7 @@ Vec3 MeshQuad::param2Cartesian(const Vec3& AX, const Vec3& AY, const Vec3& AZ)
     return Vec3(resTmp.x - res2Tmp.x, X-X2, Y-Y2);
     // prob faut renvoyer 4 elements (Mat4 ?)
 }
+*/
 
 bool MeshQuad::is_points_in_tri(const Vec3& P, const Vec3& A, const Vec3& B, const Vec3& C)
 {
@@ -257,24 +259,50 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
     return true;
     */
 
-
-
     return is_points_in_tri(P, A, B, C) || is_points_in_tri(P, D, B, C);
-}
+
+   }
 
 bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& inter)
 {
 	// recuperation des indices de points
+    // q * 4 -1 = indice dans m_quad_indices du premier indice
+
+    int a = q * 4;
+
+    int ind1 = m_quad_indices[a-1];
+    int ind2 = m_quad_indices[a];
+    int ind3 = m_quad_indices[a+1];
+    int ind4 = m_quad_indices[a+2];
+
 	// recuperation des points
 
+    Vec3 p1 = m_points[ind1];
+    Vec3 p2 = m_points[ind2];
+    Vec3 p3 = m_points[ind3];
+    Vec3 p4 = m_points[ind4];
+
 	// calcul de l'equation du plan (N+d)
+    Vec3 normal = normal_of(p1, p2, p3);
+    double d = - (normal.x*p4.x + normal.y*p4.y + normal.z*p4.z);
 
     // calcul de l'intersection rayon plan
 	// I = P + alpha*Dir est dans le plan => calcul de alpha
 
-	// alpha => calcul de I
+    double denom = dot(normal, Dir);
+    if (std::abs(denom) > 0.0001f) // un epsilon (0 serait parallel au plan)
+    {
+        float t = dot(vecOf(p1, P), normal) / denom;
 
-	// I dans le quad ?
+        // alpha => calcul de I // mettre dans inter
+        inter = Vec3(P.x + t * Dir.x, P.y + t * Dir.y, P.z + t * Dir.z);
+
+        if (t >= 0) return true;
+    }
+
+
+
+    // I dans le quad ? // is point in quad
 
     return false;
 }
