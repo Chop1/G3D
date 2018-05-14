@@ -152,6 +152,11 @@ Vec3 MeshQuad::normal_of(const Vec3& A, const Vec3& B, const Vec3& C)
     return res;
 }
 
+double MeshQuad::dot(const Vec3& A, const Vec3& B)
+{
+    return B.x*A.x + B.y*A.y + B.z*A.z;
+}
+
 Vec3 MeshQuad::vecOf(const Vec3& A, const Vec3& B)
 {
     return Vec3(B.x-A.x, B.y-A.y, B.z-A.z);
@@ -196,9 +201,32 @@ Vec3 MeshQuad::param2Cartesian(const Vec3& AX, const Vec3& AY, const Vec3& AZ)
     // prob faut renvoyer 4 elements (Mat4 ?)
 }
 
+bool MeshQuad::is_points_in_tri(const Vec3& P, const Vec3& A, const Vec3& B, const Vec3& C)
+{
+    // Compute vectors
+    Vec3 v0 = vecOf(A, C); // AC
+    Vec3 v1 = vecOf(A, B); // AB
+    Vec3 v2 = vecOf(A, P);  // AP
+
+    // Compute dot products
+    double dot00 = dot(v0, v0);
+    double dot01 = dot(v0, v1);
+    double dot02 = dot(v0, v2);
+    double dot11 = dot(v1, v1);
+    double dot12 = dot(v1, v2);
+
+    // Compute barycentric coordinates
+    double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+    double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+    // Check if point is in triangle
+    return (u > 0) && (v > 0) && (u + v < 1);
+}
 
 bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, const Vec3& C, const Vec3& D)
 {
+    /*
 	// On sait que P est dans le plan du quad.
 
     // P est-il au dessus des 4 plans contenant chacun la normale au quad et une arete AB/BC/CD/DA ?
@@ -227,6 +255,11 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
 
 
     return true;
+    */
+
+
+
+    return is_points_in_tri(P, A, B, C) || is_points_in_tri(P, D, B, C);
 }
 
 bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& inter)
