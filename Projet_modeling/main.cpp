@@ -78,6 +78,10 @@ int main(int argc, char *argv[])
 				break;
 
 			// e extrusion
+            case Qt::Key_E:
+                mesh.extrude_quad(0);
+
+                break;
 			// +/- decale
 			// z/Z shrink
 			// t/T tourne

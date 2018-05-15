@@ -521,19 +521,69 @@ void MeshQuad::extrude_quad(int q)
 {
 	// recuperation des indices de points
 
+    int a = q * 4;
+
+    int ind1 = m_quad_indices[a];
+    int ind2 = m_quad_indices[a+1];
+    int ind3 = m_quad_indices[a+2];
+    int ind4 = m_quad_indices[a+3];
+
 	// recuperation des points
+
+    Vec3 p1 = m_points[ind1];
+    Vec3 p2 = m_points[ind2];
+    Vec3 p3 = m_points[ind3];
+    Vec3 p4 = m_points[ind4];
 
 	// calcul de la normale
 
-	// calcul de la hauteur
+    Vec3 N = normal_of(p1, p2, p3);
+
+    // calcul de la hauteur // hauteur ? hauteur d'un triangle ??
+    // "distance proportionnelle à la racine carré de son aire"
+
+    double aire = norm(vecOf(p1, p2))*norm(vecOf(p1, p3));
+    //double distance = std::sqrt(aire);
+    double distance = 1;
 
 	// calcul et ajout des 4 nouveaux points
+    double p1rapport = norm(addVec(p1, N))/distance;
+    double p2rapport = norm(addVec(p2, N))/distance;
+    double p3rapport = norm(addVec(p3, N))/distance;
+    double p4rapport = norm(addVec(p4, N))/distance;
 
-	// on remplace le quad initial par le quad du dessu
+
+//    int ip1 = add_vertex(vMult(p1, Vec3(p1rapport, p1rapport, p1rapport)));
+//    int ip2 = add_vertex(vMult(p2, Vec3(p2rapport, p2rapport, p2rapport)));
+//    int ip3 = add_vertex(vMult(p3, Vec3(p3rapport, p3rapport, p3rapport)));
+//    int ip4 = add_vertex(vMult(p4, Vec3(p4rapport, p4rapport, p4rapport)));
+
+    int ip1 = add_vertex(addVec(p1, N));
+    int ip2 = add_vertex(addVec(p2, N));
+    int ip3 = add_vertex(addVec(p3, N));
+    int ip4 = add_vertex(addVec(p4, N));
+
+    // on remplace le quad initial par le quad du dessu
+
+    m_quad_indices[a] = ip1;
+    m_quad_indices[a+1] = ip2;
+    m_quad_indices[a+2] = ip3;
+    m_quad_indices[a+3] = ip4;
 
 	// on ajoute les 4 quads des cotes
+    // SENS TRIGO
 
-   gl_update();
+//    add_quad(ind2, ip2, ip3, ind3);
+//    add_quad(ind3, ip3, ip4, ind4);
+//    add_quad(ind4, ip4, ip1, ind1);
+//    add_quad(ind1, ip1, ip2, ind2);
+
+    add_quad(ip2, ind2, ind3, ip3);
+    add_quad(ip3, ind3, ind4, ip4);
+    add_quad(ip4, ind4, ind1, ip1);
+    add_quad(ip1, ind1, ind2, ip2);
+
+    gl_update();
 }
 
 void MeshQuad::transfo_quad(int q, const glm::mat4& tr)
