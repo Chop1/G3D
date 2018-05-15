@@ -180,6 +180,11 @@ Vec3 MeshQuad::vecOf(const Vec3& A, const Vec3& B)
     return Vec3(B.x-A.x, B.y-A.y, B.z-A.z);
 }
 
+Vec3 MeshQuad::vMult(const Vec3& A, const Vec3& B)
+{
+    return Vec3(B.x*A.x, B.y*A.y, B.z*A.z);
+}
+
 /*
 // const, a, b on elimine b
 Vec3 MeshQuad::param2Cartesian(const Vec3& AX, const Vec3& AY, const Vec3& AZ)
@@ -285,6 +290,7 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
     if(resousEq(P, normalAB, dAB) == -1)
     {
         res1 = true;
+        //std::cout << "1dessus" << std::endl;
     }
 
 
@@ -297,6 +303,7 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
     if(resousEq(P, normalBC, dBC) == -1)
     {
         res2 = true;
+//        std::cout << "2dessus" << std::endl;
     }
 
     // plan normal / CD
@@ -308,6 +315,7 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
     if(resousEq(P, normalCD, dCD) == -1)
     {
         res3 = true;
+//        std::cout << "3dessus" << std::endl;
     }
 
     // plan normal / DA
@@ -319,6 +327,7 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
     if(resousEq(P, normalDA, dDA) == -1)
     {
         res4 = true;
+//        std::cout << "4dessus" << std::endl;
     }
 
 
@@ -352,7 +361,6 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
 bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& inter)
 {
 	// recuperation des indices de points
-    // q * 4 -1 = indice dans m_quad_indices du premier indice
 
     int a = q * 4;
 
@@ -420,6 +428,7 @@ int MeshQuad::intersected_closest(const Vec3& P, const Vec3& Dir)
 
 	int inter = -1;
     Vec3 pInter;
+    Vec3 pInterMem;
 
     // parcour des quads
     size_t quadSize = m_quad_indices.size();
@@ -429,9 +438,10 @@ int MeshQuad::intersected_closest(const Vec3& P, const Vec3& Dir)
 //        std::cout << "test " << i << std::endl;
 //        std::cout << "inter: " << inter << std::endl;
         if(((inter == -1) && intersect_ray_quad(P, Dir, i/4, pInter))
-            || ((inter != -1) && intersect_ray_quad(P, Dir, i/4, pInter) && norm(vecOf(P, pInter)) < inter))// abs t >=0
+            || ((inter != -1) && intersect_ray_quad(P, Dir, i/4, pInter) && std::abs(norm(vecOf(P, pInter))) < std::abs(norm(vecOf(P, pInterMem)))))// abs t >=0
         {
             inter = i/4;
+            pInterMem = pInter;
         }
 
     }
@@ -445,22 +455,66 @@ Mat4 MeshQuad::local_frame(int q)
 	// les trois premieres colones: X,Y,Z locaux
 	// la derniere colonne l'origine du repere
 
-	// ici Z = N et X = AB
+    // ici Z = N // la normal
+    // et X = AB // première arrete du quad
 	// Origine le centre de la face
 	// longueur des axes : [AB]/2
 
 	// recuperation des indices de points
+
+    int a = q * 4;
+
+    int ind1 = m_quad_indices[a];
+    int ind2 = m_quad_indices[a+1];
+    int ind3 = m_quad_indices[a+2];
+    int ind4 = m_quad_indices[a+3];
+
 	// recuperation des points
 
-	// calcul de Z:N / X:AB -> Y
+    Vec3 p1 = m_points[ind1];
+    Vec3 p2 = m_points[ind2];
+    Vec3 p3 = m_points[ind3];
+    Vec3 p4 = m_points[ind4];
+
+    // calcul de Z:N
+
+    Vec3 Z = normal_of(p1, p2, p3);
+
+    // X:AB
+
+    Vec3 X = vecOf(p1, p2);
+
+    // Y:AC
+
+    Vec3 Y = vecOf(p1, p3);
 
 	// calcul du centre
 
+    Vec3 centre(0.0, 0.0, 0.0);
+    for(unsigned int i = 0; i < 4; i++)
+    {
+        centre = Vec3(centre.x+m_points[a+i].x, centre.y+m_points[a+i].y, centre.z+m_points[a+i].z);
+    }
+    centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
+
 	// calcul de la taille
+
+    double taille = norm(X)/2;
 
 	// calcul de la matrice
 
-    return Mat4();
+    double xRapport = norm(addVec(centre, X))/taille;
+    X = vMult(X, Vec3(xRapport, xRapport, xRapport));
+
+    double yRapport = norm(addVec(centre, Y))/taille;
+    Y = vMult(Y, Vec3(yRapport, yRapport, yRapport));
+
+    double zRapport = norm(addVec(centre, Z))/taille;
+    Z = vMult(Z, Vec3(zRapport, zRapport, zRapport));
+
+    Mat4 res(Vec4(X, 0), Vec4(Y,0), Vec4(Z,0), Vec4(centre,1));
+
+    return res;
 }
 
 void MeshQuad::extrude_quad(int q)
