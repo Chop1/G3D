@@ -245,43 +245,96 @@ bool MeshQuad::is_points_in_tri(const Vec3& P, const Vec3& A, const Vec3& B, con
     return (u > 0) && (v > 0) && (u + v < 1);
 }
 
+Vec3 MeshQuad::addVec(const Vec3& P, const Vec3& V)
+{
+    return Vec3 (P.x + V.x, P.y + V.y, P.z + V.z);
+}
+
+// return 0 si =0, 1 si >0, -1 si <0
+int MeshQuad::resousEq(const Vec3& Point, const Vec3& Normal, double& d)
+{
+     double res = Normal.x * Point.x + Normal.y * Point.y + Normal.z * Point.z + d;
+
+     if(res == 0)
+         return 0;
+     return (res > 0)? 1 : -1;
+}
+
 bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, const Vec3& C, const Vec3& D)
 {
-    /*
-	// On sait que P est dans le plan du quad.
+    // On sait que P est dans le plan du quad.
 
     // P est-il au dessus des 4 plans contenant chacun la normale au quad et une arete AB/BC/CD/DA ?
-	// si oui il est dans le quad
-
-
-    // normal of quad: cross product of the 2 diago
-
-    // comme je ne sais pas comment sont donnés les points j'utilise le centre
-    Vec3 centroide((A.x+B.x+C.x+D.x)/4, (A.y+B.y+C.y+D.y)/4, (A.z+B.z+C.z+D.z)/4);
-
-    Vec3 normal(centroide, normal_of(centroide, A, B), normal_of(centroide, C, D));
+	// si oui il est dans le quad  
 
     Vec3 AB = vecOf(A, B);
     Vec3 BC = vecOf(B, C);
     Vec3 CD = vecOf(C, D);
     Vec3 DA = vecOf(D, A);
 
-    // on a à chaque fois 2 vecteurs non colinéaire et 1 point
+    // calcul de l'equation du plan (N+d) ABCD
+    Vec3 N = normal_of(A, B, C);
+    double d = - (N.x*A.x + N.y*A.y + N.z*A.z);
 
-    Vec3 eqParamX(A.x, normal.x, AB.x);
-    Vec3 eqParamY(A.y, normal.y, AB.y);
-    Vec3 eqParamZ(A.z, normal.z, AB.z);
+    // plan normal / AB
+    Vec3 normalAB = normal_of(A, B, addVec(A, N));
+    double dAB = - (normalAB.x*A.x + normalAB.y*A.y + normalAB.z*A.z);
 
-    Vec3 eqCartesien = param2Cartesian(eqParamX, eqParamY, eqParamZ);
+    bool res1 = false;
+
+    if(resousEq(P, normalAB, dAB) == -1)
+    {
+        res1 = true;
+    }
 
 
-    return true;
-    */
+    // plan normal / BC
+    Vec3 normalBC = normal_of(B, C, addVec(B, N));
+    double dBC = - (normalBC.x*B.x + normalBC.y*B.y + normalBC.z*B.z);
+
+    bool res2 = false;
+
+    if(resousEq(P, normalBC, dBC) == -1)
+    {
+        res2 = true;
+    }
+
+    // plan normal / CD
+    Vec3 normalCD = normal_of(C, D, addVec(C, N));
+    double dCD = - (normalCD.x*C.x + normalCD.y*C.y + normalCD.z*C.z);
+
+    bool res3 = false;
+
+    if(resousEq(P, normalCD, dCD) == -1)
+    {
+        res3 = true;
+    }
+
+    // plan normal / DA
+    Vec3 normalDA = normal_of(D, A, addVec(D, N));
+    double dDA = - (normalDA.x*D.x + normalDA.y*D.y + normalDA.z*D.z);
+
+    bool res4 = false;
+
+    if(resousEq(P, normalDA, dDA) == -1)
+    {
+        res4 = true;
+    }
+
+
+
+
+
+    return res1 && res2 && res3 && res4;
+
+
+/*
     if (is_points_in_tri(P, A, B, C) || is_points_in_tri(P, D, B, C))
         std::cout << "P " << P.y << ", " << P.y << ", " << P.z << " dedans" << std::endl;
     else
         std::cout << "P " << P.y << ", " << P.y << ", " << P.z << " pas dedans" << std::endl;
     return is_points_in_tri(P, A, B, C) || is_points_in_tri(P, D, B, C);
+*/
 /*
     Vec3 v0 = vecOf(A, B); // AB
     Vec3 v1 = vecOf(A, D); // AD
@@ -302,13 +355,11 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
     // q * 4 -1 = indice dans m_quad_indices du premier indice
 
     int a = q * 4;
-    if(a=0)
-        a++;
 
-    int ind1 = m_quad_indices[a-1];
-    int ind2 = m_quad_indices[a];
-    int ind3 = m_quad_indices[a+1];
-    int ind4 = m_quad_indices[a+2];
+    int ind1 = m_quad_indices[a];
+    int ind2 = m_quad_indices[a+1];
+    int ind3 = m_quad_indices[a+2];
+    int ind4 = m_quad_indices[a+3];
 
 	// recuperation des points
 
@@ -337,7 +388,9 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
         // alpha => calcul de I // mettre dans inter
         inter = Vec3(P.x + t * Dir.x, P.y + t * Dir.y, P.z + t * Dir.z);
 
-        if (t >= 0) return true;
+        std::cout << "intersection en " << inter.x << ", " << inter.y << ", " << inter.z
+                  << "\nt: " << t << std::endl;
+        return true;
     }
 
 
@@ -352,6 +405,13 @@ double MeshQuad::norm(Vec3 const& u)
     return std::sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
 }
 
+Vec3 MeshQuad::normalise(Vec3 const& u)
+{
+    double norme = norm(u);
+    return Vec3(u.x / norme, u.y / norme, u.z / norme);
+}
+
+// ça ne semble marché que quand le cube est bien de face
 int MeshQuad::intersected_closest(const Vec3& P, const Vec3& Dir)
 {
 	// on parcours tous les quads
@@ -363,20 +423,17 @@ int MeshQuad::intersected_closest(const Vec3& P, const Vec3& Dir)
 
     // parcour des quads
     size_t quadSize = m_quad_indices.size();
-    std::cout << "nbr quad: " << quadSize << std::endl;
+    std::cout << "==================\nnbr quad: " << quadSize/4 << std::endl;
     for(unsigned int i = 0; i < quadSize; i+=4)
     {
 //        std::cout << "test " << i << std::endl;
 //        std::cout << "inter: " << inter << std::endl;
-        if((inter == -1) && intersect_ray_quad(P, Dir, i, pInter)) // abs t >=0
+        if(((inter == -1) && intersect_ray_quad(P, Dir, i/4, pInter))
+            || ((inter != -1) && intersect_ray_quad(P, Dir, i/4, pInter) && norm(vecOf(P, pInter)) < inter))// abs t >=0
         {
-            inter = i;
+            inter = i/4;
         }
 
-        else if(intersect_ray_quad(P, Dir, i, pInter) && norm(vecOf(P, pInter)) < inter)
-        {
-            inter = i;
-        }
     }
     return inter;
 }

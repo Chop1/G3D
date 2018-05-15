@@ -203,6 +203,9 @@ private:
     bool is_points_in_tri(const Vec3 &P, const Vec3 &A, const Vec3 &B, const Vec3 &C);
     double dot(const Vec3 &A, const Vec3 &B);
     double norm(const Vec3 &u);
+    Vec3 normalise(const Vec3 &u);
+    Vec3 addVec(const Vec3 &P, const Vec3 &V);
+    int resousEq(const Vec3 &Point, const Vec3 &Normal, double &d);
 };
 
 #endif // MESHTRI_H
