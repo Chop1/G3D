@@ -185,6 +185,11 @@ Vec3 MeshQuad::vMult(const Vec3& A, const Vec3& B)
     return Vec3(B.x*A.x, B.y*A.y, B.z*A.z);
 }
 
+Vec3 MeshQuad::multScal(const Vec3& A, const double& B)
+{
+    return Vec3(B*A.x, B*A.y, B*A.z);
+}
+
 /*
 // const, a, b on elimine b
 Vec3 MeshQuad::param2Cartesian(const Vec3& AX, const Vec3& AY, const Vec3& AZ)
@@ -558,7 +563,7 @@ void MeshQuad::extrude_quad(int q)
 //    int ip3 = add_vertex(vMult(p3, Vec3(p3rapport, p3rapport, p3rapport)));
 //    int ip4 = add_vertex(vMult(p4, Vec3(p4rapport, p4rapport, p4rapport)));
 
-    int ip1 = add_vertex(addVec(p1, N));
+    int ip1 = add_vertex(addVec(p1, multScal(N, 2)));
     int ip2 = add_vertex(addVec(p2, N));
     int ip3 = add_vertex(addVec(p3, N));
     int ip4 = add_vertex(addVec(p4, N));
