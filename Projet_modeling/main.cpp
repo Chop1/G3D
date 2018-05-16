@@ -17,14 +17,19 @@ const Vec3 NOIR    = {0,0,0};
 
 //Primitives prim;
 
-//void fleche(const Mat4& tr, Vec3 coul)
-//{
-//    prim.draw_cylinder(tr * translate(0, 0, 1.5)*scale(0.5F, 0.5F, 2.0F), coul); // scale + transfo
-//    prim.draw_cone(tr * translate(0, 0, 3), coul); // pas de scale -> translation
-//}
+void fleche(const Primitives& prim, const Mat4& tr, Vec3 coul)
+{
+    prim.draw_cylinder(tr * translate(0, 0, 1.5)*scale(0.5F, 0.5F, 2.0F), coul); // scale + transfo
+    prim.draw_cone(tr * translate(0, 0, 3), coul); // pas de scale -> translation
+}
 
 void draw_repere(const Primitives& prim, const Mat4& tr)
 {
+    prim.draw_sphere(tr * Mat4() * scale(0.5), BLANC); // on bouge pas -> pas de transformation
+
+    fleche(prim, tr * rotateY(90) * scale(0.5), ROUGE);
+    fleche(prim, tr * rotateX(-90) * scale(0.5), VERT);
+    fleche(prim, tr * Mat4() * scale(0.5), BLEU);
 }
 
 
@@ -63,7 +68,7 @@ int main(int argc, char *argv[])
 		mesh.draw(CYAN);
 
 		if (selected_quad>=0)
-            draw_repere(prim,selected_frame);
+            draw_repere(prim, selected_frame);
 	};
 
 	// to do when key pressed

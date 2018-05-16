@@ -494,27 +494,23 @@ Mat4 MeshQuad::local_frame(int q)
 
 	// calcul du centre
 
-    Vec3 centre(0.0, 0.0, 0.0);
-    for(unsigned int i = 0; i < 4; i++)
-    {
-        centre = Vec3(centre.x+m_points[a+i].x, centre.y+m_points[a+i].y, centre.z+m_points[a+i].z);
-    }
+    Vec3 centre = p1+p2+p3+p4;
     centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
 
 	// calcul de la taille
 
-    double taille = norm(X)/2;
+    double taille = std::abs(norm(vecOf(p1, p2)))/2;
 
 	// calcul de la matrice
 
-    double xRapport = norm(addVec(centre, X))*taille;
-    X = vMult(X, Vec3(xRapport, xRapport, xRapport));
+    double xRapport = norm(addVec(centre, X))/taille;
+    X = vMult(X, Vec3(1/xRapport, 1/xRapport, 1/xRapport));
 
-    double yRapport = norm(addVec(centre, Y))*taille;
-    Y = vMult(Y, Vec3(yRapport, yRapport, yRapport));
+    double yRapport = norm(addVec(centre, Y))/taille;
+    Y = vMult(Y, Vec3(1/yRapport, 1/yRapport, 1/yRapport));
 
-    double zRapport = norm(addVec(centre, Z))*taille;
-    Z = vMult(Z, Vec3(zRapport, zRapport, zRapport));
+    double zRapport = norm(addVec(centre, Z))/taille;
+    Z = vMult(Z, Vec3(1/zRapport, 1/zRapport, 1/zRapport));
 
     Mat4 res(Vec4(X, 0), Vec4(Y,0), Vec4(Z,0), Vec4(centre,1));
 
@@ -618,6 +614,8 @@ void MeshQuad::transfo_quad(int q, const glm::mat4& tr)
     Mat4 LCS = local_frame(q);
     Mat4 GCS = glm::inverse(tr) * LCS;
 
+
+
    // Mat4 M = glm::inverse(glm::inverse() * tr); // matrice de transfo du quad
 
     Mat4 G = translate(centre.x, centre.y, centre.z) * tr * translate(-centre.x, -centre.y, -centre.z);
@@ -655,7 +653,12 @@ void MeshQuad::decale_quad(int q, float d)
     double aire = norm(vecOf(p1, p2))*norm(vecOf(p1, p4));
     double distance = std::sqrt(aire);
 
-    transfo_quad(q, translate(0, 0, distance));
+    Vec3 centre = p1+p2+p3+p4;
+    centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
+
+    Mat4 G = translate(centre.x, centre.y, centre.z) * translate(0, 0, d*distance) * translate(-centre.x, -centre.y, -centre.z);
+
+    transfo_quad(q, G);
 }
 
 void MeshQuad::shrink_quad(int q, float s)
@@ -667,9 +670,6 @@ void MeshQuad::tourne_quad(int q, float a)
 {
     transfo_quad(q, rotateZ(a));
 }
-
-
-
 
 
 MeshQuad::MeshQuad():
