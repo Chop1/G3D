@@ -15,7 +15,13 @@ const Vec3 BLANC   = {1,1,1};
 const Vec3 GRIS    = {0.5,0.5,0.5};
 const Vec3 NOIR    = {0,0,0};
 
+//Primitives prim;
 
+//void fleche(const Mat4& tr, Vec3 coul)
+//{
+//    prim.draw_cylinder(tr * translate(0, 0, 1.5)*scale(0.5F, 0.5F, 2.0F), coul); // scale + transfo
+//    prim.draw_cone(tr * translate(0, 0, 3), coul); // pas de scale -> translation
+//}
 
 void draw_repere(const Primitives& prim, const Mat4& tr)
 {
@@ -27,10 +33,6 @@ void star(MeshQuad& m)
 	m.create_cube();
 	// ...
 }
-
-
-
-
 
 
 int main(int argc, char *argv[])
@@ -61,7 +63,7 @@ int main(int argc, char *argv[])
 		mesh.draw(CYAN);
 
 		if (selected_quad>=0)
-			draw_repere(prim,selected_frame);
+            draw_repere(prim,selected_frame);
 	};
 
 	// to do when key pressed
@@ -70,7 +72,7 @@ int main(int argc, char *argv[])
 		switch(key)
 		{
 			case Qt::Key_C:
-				if (!(mod & Qt::ControlModifier))
+                if (!(mod & Qt::ControlModifier) && !mesh.nb_quads())
                 {
 					mesh.create_cube();
                     mesh.is_points_in_quad(Vec3(0.2, 0.2, 1), Vec3(1, 0, 0), Vec3(1, 1, 0), Vec3(0, 0, 0), Vec3(1, 0, 0));
@@ -79,10 +81,40 @@ int main(int argc, char *argv[])
 
 			// e extrusion
             case Qt::Key_E:
-                mesh.extrude_quad(0);
-
+                if(!mesh.nb_quads() || selected_quad == -1)
+                {
+                    std::cout <<  "pas de quad" << std::endl;
+                    return;
+                }
+                else
+                {
+                    mesh.extrude_quad(selected_quad);
+                }
                 break;
 			// +/- decale
+            case Qt::Key_Plus:
+                if(!mesh.nb_quads() || selected_quad == -1)
+                {
+                    std::cout <<  "pas de quad" << std::endl;
+                    return;
+                }
+                else
+                {
+                    mesh.decale_quad(selected_quad, 1);
+                }
+            break;
+
+            case Qt::Key_Minus:
+                if(!mesh.nb_quads() || selected_quad == -1)
+                {
+                    std::cout <<  "pas de quad" << std::endl;
+                    return;
+                }
+                else
+                {
+                    mesh.decale_quad(selected_quad, -1);
+                }
+            break;
 			// z/Z shrink
 			// t/T tourne
 
@@ -113,7 +145,10 @@ int main(int argc, char *argv[])
 	{
 		selected_quad = mesh.intersected_closest(P,Dir);
 		if (selected_quad>=0)
-			selected_frame = mesh.local_frame(selected_quad);
+        {
+			selected_frame = mesh.local_frame(selected_quad);  
+            //draw_repere(selected_frame);
+        }
 		std::cout << selected_quad << std::endl;
 	};
 

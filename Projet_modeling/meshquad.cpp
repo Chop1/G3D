@@ -93,8 +93,6 @@ void MeshQuad::bounding_sphere(Vec3& C, float& R)
     // centre de gravité (m de tout les points entre eux)
     // note: pas minimum
     // TODO remplacer les valeurs par defaut
-    C = {0, 0, 0};
-
     Vec3 centre(0,0,0);
 
     // parcour des points
@@ -107,10 +105,10 @@ void MeshQuad::bounding_sphere(Vec3& C, float& R)
 
 	// R=
     // rayon entre centre et point le plus eloigné
-    double max = 0;
+    float max = 0;
     for(unsigned int i = 0; i < pointSize; i++)
     {
-        double tmp = std::abs(norm(vecOf(C, m_points[i])));
+        float tmp = std::abs(norm(vecOf(C, m_points[i])));
         if(tmp > max)
             max = tmp;
     }
@@ -165,7 +163,7 @@ Vec3 MeshQuad::normal_of(const Vec3& A, const Vec3& B, const Vec3& C)
 
     Vec3 res(X, Y, Z);
 
-    res = normalize(res);
+    res = normalise(res);
 
     return res;
 }
@@ -283,7 +281,7 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
     Vec3 DA = vecOf(D, A);
 
     // calcul de l'equation du plan (N+d) ABCD
-    Vec3 N = normal_of(A, B, C);
+    Vec3 N = normal_of(A, B, D);
     double d = - (N.x*A.x + N.y*A.y + N.z*A.z);
 
     // plan normal / AB
@@ -341,14 +339,8 @@ bool MeshQuad::is_points_in_quad(const Vec3& P, const Vec3& A, const Vec3& B, co
 
     return res1 && res2 && res3 && res4;
 
+//    return is_points_in_tri(P, A, B, C) || is_points_in_tri(P, A, C, D);
 
-/*
-    if (is_points_in_tri(P, A, B, C) || is_points_in_tri(P, D, B, C))
-        std::cout << "P " << P.y << ", " << P.y << ", " << P.z << " dedans" << std::endl;
-    else
-        std::cout << "P " << P.y << ", " << P.y << ", " << P.z << " pas dedans" << std::endl;
-    return is_points_in_tri(P, A, B, C) || is_points_in_tri(P, D, B, C);
-*/
 /*
     Vec3 v0 = vecOf(A, B); // AB
     Vec3 v1 = vecOf(A, D); // AD
@@ -387,7 +379,7 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
     std::cout << "quad " << q << " contient le point" << std::endl;
 
 	// calcul de l'equation du plan (N+d)
-    Vec3 normal = normal_of(p1, p2, p3);
+    Vec3 normal = normal_of(p1, p2, p4);
     double d = - (normal.x*p4.x + normal.y*p4.y + normal.z*p4.z);
 
     // calcul de l'intersection rayon plan
@@ -413,11 +405,13 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
     return false;
 }
 
+// norme d'un vecteur
 double MeshQuad::norm(Vec3 const& u)
 {
     return std::sqrt(u.x*u.x + u.y*u.y + u.z*u.z);
 }
 
+// normalise un vecteur
 Vec3 MeshQuad::normalise(Vec3 const& u)
 {
     double norme = norm(u);
@@ -483,15 +477,20 @@ Mat4 MeshQuad::local_frame(int q)
 
     // calcul de Z:N
 
-    Vec3 Z = normal_of(p1, p2, p3);
+    Vec3 Z = normal_of(p1, p2, p4);
+
 
     // X:AB
 
     Vec3 X = vecOf(p1, p2);
 
-    // Y:AC
 
-    Vec3 Y = vecOf(p1, p3);
+    // Y:cross(X, Z)
+
+    Vec3 Y = vec_cross(X, Z);
+    Y = vec_normalize(Y);
+    Z = vec_normalize(Z);
+    X = vec_normalize(X);
 
 	// calcul du centre
 
@@ -508,13 +507,13 @@ Mat4 MeshQuad::local_frame(int q)
 
 	// calcul de la matrice
 
-    double xRapport = norm(addVec(centre, X))/taille;
+    double xRapport = norm(addVec(centre, X))*taille;
     X = vMult(X, Vec3(xRapport, xRapport, xRapport));
 
-    double yRapport = norm(addVec(centre, Y))/taille;
+    double yRapport = norm(addVec(centre, Y))*taille;
     Y = vMult(Y, Vec3(yRapport, yRapport, yRapport));
 
-    double zRapport = norm(addVec(centre, Z))/taille;
+    double zRapport = norm(addVec(centre, Z))*taille;
     Z = vMult(Z, Vec3(zRapport, zRapport, zRapport));
 
     Mat4 res(Vec4(X, 0), Vec4(Y,0), Vec4(Z,0), Vec4(centre,1));
@@ -542,14 +541,13 @@ void MeshQuad::extrude_quad(int q)
 
 	// calcul de la normale
 
-    Vec3 N = normal_of(p1, p2, p3);
+    Vec3 N = normal_of(p1, p2, p4);
 
     // calcul de la hauteur // hauteur ? hauteur d'un triangle ??
     // "distance proportionnelle à la racine carré de son aire"
 
-    double aire = norm(vecOf(p1, p2))*norm(vecOf(p1, p3));
-    //double distance = std::sqrt(aire);
-    double distance = 1;
+    double aire = norm(vecOf(p1, p2))*norm(vecOf(p1, p4));
+    double distance = 2*std::sqrt(aire);
 
 	// calcul et ajout des 4 nouveaux points
     double p1rapport = norm(addVec(p1, N))/distance;
@@ -564,9 +562,9 @@ void MeshQuad::extrude_quad(int q)
 //    int ip4 = add_vertex(vMult(p4, Vec3(p4rapport, p4rapport, p4rapport)));
 
     int ip1 = add_vertex(addVec(p1, multScal(N, 2)));
-    int ip2 = add_vertex(addVec(p2, N));
-    int ip3 = add_vertex(addVec(p3, N));
-    int ip4 = add_vertex(addVec(p4, N));
+    int ip2 = add_vertex(addVec(p2, multScal(N, 2)));
+    int ip3 = add_vertex(addVec(p3, multScal(N, 2)));
+    int ip4 = add_vertex(addVec(p4, multScal(N, 2)));
 
     // on remplace le quad initial par le quad du dessu
 
@@ -594,17 +592,75 @@ void MeshQuad::extrude_quad(int q)
 void MeshQuad::transfo_quad(int q, const glm::mat4& tr)
 {
 	// recuperation des indices de points
+
+    int a = q * 4;
+
+    int ind1 = m_quad_indices[a];
+    int ind2 = m_quad_indices[a+1];
+    int ind3 = m_quad_indices[a+2];
+    int ind4 = m_quad_indices[a+3];
+
 	// recuperation des (references de) points
+
+    Vec3& p1 = m_points[ind1];
+    Vec3& p2 = m_points[ind2];
+    Vec3& p3 = m_points[ind3];
+    Vec3& p4 = m_points[ind4];
+
+    // calcul du centre
+
+    Vec3 centre(0.0, 0.0, 0.0);
+    for(unsigned int i = 0; i < 4; i++)
+    {
+        centre = Vec3(centre.x+m_points[a+i].x, centre.y+m_points[a+i].y, centre.z+m_points[a+i].z);
+    }
+    centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
 
 	// generation de la matrice de transfo globale:
 	// indice utilisation de glm::inverse() et de local_frame
 
+    Mat4 LCS = local_frame(q);
+    Mat4 GCS = glm::inverse(tr) * LCS;
+
+   // Mat4 M = glm::inverse(glm::inverse() * tr); // matrice de transfo du quad
+    //glm::inverse();
+
+    Mat4 G = translate(centre.x, centre.y, centre.z) * tr * translate(-centre.x, -centre.y, -centre.z);
+
 	// Application au 4 points du quad
+
+    p1 = (Vec3)(GCS * Vec4(p1, 1));
+    p2 = (Vec3)(GCS * Vec4(p2, 1));
+    p3 = (Vec3)(GCS * Vec4(p3, 1));
+    p4 = (Vec3)(GCS * Vec4(p4, 1));
+
+    gl_update();
 }
 
 void MeshQuad::decale_quad(int q, float d)
 {
+    // recuperation des indices de points
 
+    int a = q * 4;
+
+    int ind1 = m_quad_indices[a];
+    int ind2 = m_quad_indices[a+1];
+    int ind3 = m_quad_indices[a+2];
+    int ind4 = m_quad_indices[a+3];
+
+    // recuperation des points
+
+    Vec3 p1 = m_points[ind1];
+    Vec3 p2 = m_points[ind2];
+    Vec3 p3 = m_points[ind3];
+    Vec3 p4 = m_points[ind4];
+
+    // "distance proportionnelle à la racine carré de son aire"
+
+    double aire = norm(vecOf(p1, p2))*norm(vecOf(p1, p4));
+    double distance = std::sqrt(aire);
+
+    transfo_quad(q, translate(0, 0, distance));
 }
 
 void MeshQuad::shrink_quad(int q, float s)
