@@ -539,11 +539,11 @@ void MeshQuad::extrude_quad(int q)
 
     Vec3 N = normal_of(p1, p2, p4);
 
-    // calcul de la hauteur // hauteur ? hauteur d'un triangle ??
+    // calcul de la hauteur
     // "distance proportionnelle à la racine carré de son aire"
 
     double aire = norm(vecOf(p1, p2))*norm(vecOf(p1, p4));
-    double distance = 2*std::sqrt(aire);
+    double distance = std::sqrt(aire);
 
 	// calcul et ajout des 4 nouveaux points
     double p1rapport = norm(addVec(p1, N))/distance;
@@ -552,10 +552,11 @@ void MeshQuad::extrude_quad(int q)
     double p4rapport = norm(addVec(p4, N))/distance;
 
 
-//    int ip1 = add_vertex(vMult(p1, Vec3(p1rapport, p1rapport, p1rapport)));
-//    int ip2 = add_vertex(vMult(p2, Vec3(p2rapport, p2rapport, p2rapport)));
-//    int ip3 = add_vertex(vMult(p3, Vec3(p3rapport, p3rapport, p3rapport)));
-//    int ip4 = add_vertex(vMult(p4, Vec3(p4rapport, p4rapport, p4rapport)));
+    // problème
+//    int ip1 = add_vertex(addVec(p1, multScal(N, p1rapport)));
+//    int ip2 = add_vertex(addVec(p2, multScal(N, p2rapport)));
+//    int ip3 = add_vertex(addVec(p3, multScal(N, p3rapport)));
+//    int ip4 = add_vertex(addVec(p4, multScal(N, p4rapport)));
 
     int ip1 = add_vertex(addVec(p1, multScal(N, 2)));
     int ip2 = add_vertex(addVec(p2, multScal(N, 2)));
@@ -587,8 +588,7 @@ void MeshQuad::extrude_quad(int q)
 
 void MeshQuad::transfo_quad(int q, const glm::mat4& tr)
 {
-	// recuperation des indices de points
-
+    // recuperation des indices de points
     int a = q * 4;
 
     int ind1 = m_quad_indices[a];
@@ -610,24 +610,35 @@ void MeshQuad::transfo_quad(int q, const glm::mat4& tr)
 
 	// generation de la matrice de transfo globale:
 	// indice utilisation de glm::inverse() et de local_frame
+    Mat4 M = local_frame(q);
+    Mat4 M1 = glm::inverse(M);
+    // 1: calculer le point dans repere local
+    Vec4 p1L = M * Vec4(p1, 1);
+    // 2: translater a l'origine du repere local, transformer et retranslater
+    Vec3 O = Vec3(M[0]);
+    Mat4 T = translate(O.x, O.y, O.z) * tr * translate(-O.x, -O.y, -O.z);
+    p1L = T * p1L;
+    // 3: repasser dans le repère global
+    p1L = M1 * p1L;
 
-    Mat4 M = glm::inverse(tr);
-    Mat4 T = M * local_frame(q);
+    Vec4 p2L = M * Vec4(p2, 1);
+    p2L = T * p2L;
+    p2L = M1 * p2L;
 
-    //Mat4 GCS = M * LCS;
+    Vec4 p3L = M * Vec4(p3, 1);
+    p3L = T * p3L;
+    p3L = M1 * p3L;
 
-    // je suis devenu fou sur cette question
-    // je n'ai pas trouvé..
-    // dans le .h on demande d'appliquer une transfo locale
-    // mais en indication on demande de calculer la transfo globale ?
-
+    Vec4 p4L = M * Vec4(p4, 1);
+    p4L = T * p4L;
+    p4L = M1 * p4L;
 
 	// Application au 4 points du quad
 
-    p1 = (Vec3)(T*Vec4(p1, 1));
-    p2 = (Vec3)(T*Vec4(p2, 1));
-    p3 = (Vec3)(T*Vec4(p3, 1));
-    p4 = (Vec3)(T*Vec4(p4, 1));
+    p1 = Vec3(p1L);
+    p2 = Vec3(p2L);
+    p3 = Vec3(p3L);
+    p4 = Vec3(p4L);
 
     gl_update();
 }
@@ -658,35 +669,12 @@ void MeshQuad::decale_quad(int q, float d)
     Vec3 centre = p1+p2+p3+p4;
     centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
 
-    Mat4 G = translate(centre.x, centre.y, centre.z) * translate(0, 0, (1+d)*distance) * translate(-centre.x, -centre.y, -centre.z);
-
-    transfo_quad(q, G);
+    transfo_quad(q, translate(0, 0, (d/2)*distance));
 }
 
 void MeshQuad::shrink_quad(int q, float s)
 {
-    // recuperation des indices de points
-
-    int a = q * 4;
-
-    int ind1 = m_quad_indices[a];
-    int ind2 = m_quad_indices[a+1];
-    int ind3 = m_quad_indices[a+2];
-    int ind4 = m_quad_indices[a+3];
-
-    // recuperation des points
-
-    Vec3 p1 = m_points[ind1];
-    Vec3 p2 = m_points[ind2];
-    Vec3 p3 = m_points[ind3];
-    Vec3 p4 = m_points[ind4];
-
-    Vec3 centre = p1+p2+p3+p4;
-    centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
-
-    Mat4 G = translate(centre.x, centre.y, centre.z) * scale(1/s, 1/s, 1) * translate(-centre.x, -centre.y, -centre.z);
-
-    transfo_quad(q, G);
+    transfo_quad(q, scale(1/s, 1/s, 1));
 }
 
 void MeshQuad::tourne_quad(int q, float a)

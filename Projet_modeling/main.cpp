@@ -15,7 +15,6 @@ const Vec3 BLANC   = {1,1,1};
 const Vec3 GRIS    = {0.5,0.5,0.5};
 const Vec3 NOIR    = {0,0,0};
 
-//Primitives prim;
 
 void fleche(const Primitives& prim, const Mat4& tr, Vec3 coul)
 {
@@ -36,7 +35,15 @@ void draw_repere(const Primitives& prim, const Mat4& tr)
 void star(MeshQuad& m)
 {
 	m.create_cube();
-	// ...
+    for(int i = 0; i<6; i++)
+    {
+        for(int y = i+10; y>i; y--)
+        {
+            m.extrude_quad(i);
+            //m.shrink_quad(i, 1.5);
+            m.tourne_quad(i, 5);
+        }
+    }
 }
 
 
@@ -79,8 +86,7 @@ int main(int argc, char *argv[])
 			case Qt::Key_C:
                 if (!(mod & Qt::ControlModifier) && !mesh.nb_quads())
                 {
-					mesh.create_cube();
-                    mesh.is_points_in_quad(Vec3(0.2, 0.2, 1), Vec3(1, 0, 0), Vec3(1, 1, 0), Vec3(0, 0, 0), Vec3(1, 0, 0));
+                    mesh.create_cube();
                 }
 				break;
 
@@ -129,7 +135,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    mesh.shrink_quad(selected_quad, 0.5);
+                    mesh.shrink_quad(selected_quad, 1.5);
                 }
             break;
 			// t/T tourne
@@ -141,7 +147,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    mesh.tourne_quad(selected_quad, 5);
+                    mesh.tourne_quad(selected_quad, 25);
                 }
             break;
 
