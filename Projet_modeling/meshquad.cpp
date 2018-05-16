@@ -609,11 +609,7 @@ void MeshQuad::transfo_quad(int q, const glm::mat4& tr)
 
     // calcul du centre
 
-    Vec3 centre(0.0, 0.0, 0.0);
-    for(unsigned int i = 0; i < 4; i++)
-    {
-        centre = Vec3(centre.x+m_points[a+i].x, centre.y+m_points[a+i].y, centre.z+m_points[a+i].z);
-    }
+    Vec3 centre = p1+p2+p3+p4;
     centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
 
 	// generation de la matrice de transfo globale:
@@ -623,7 +619,6 @@ void MeshQuad::transfo_quad(int q, const glm::mat4& tr)
     Mat4 GCS = glm::inverse(tr) * LCS;
 
    // Mat4 M = glm::inverse(glm::inverse() * tr); // matrice de transfo du quad
-    //glm::inverse();
 
     Mat4 G = translate(centre.x, centre.y, centre.z) * tr * translate(-centre.x, -centre.y, -centre.z);
 
@@ -665,12 +660,12 @@ void MeshQuad::decale_quad(int q, float d)
 
 void MeshQuad::shrink_quad(int q, float s)
 {
-
+    transfo_quad(q, scale(1/s, 1/s, 1));
 }
 
 void MeshQuad::tourne_quad(int q, float a)
 {
-
+    transfo_quad(q, rotateZ(a));
 }
 
 

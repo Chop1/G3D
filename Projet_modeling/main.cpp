@@ -116,7 +116,29 @@ int main(int argc, char *argv[])
                 }
             break;
 			// z/Z shrink
+            case Qt::Key_Z:
+                if(!mesh.nb_quads() || selected_quad == -1)
+                {
+                    std::cout <<  "pas de quad" << std::endl;
+                    return;
+                }
+                else
+                {
+                    mesh.shrink_quad(selected_quad, 0.5);
+                }
+            break;
 			// t/T tourne
+            case Qt::Key_T:
+                if(!mesh.nb_quads() || selected_quad == -1)
+                {
+                    std::cout <<  "pas de quad" << std::endl;
+                    return;
+                }
+                else
+                {
+                    mesh.tourne_quad(selected_quad, 5);
+                }
+            break;
 
 			// Attention au cas m_selected_quad == -1
 
@@ -125,6 +147,9 @@ int main(int argc, char *argv[])
 				star(mesh);
 				break;
 			// ....
+            case Qt::Key_M:
+
+            break;
 
 
 			default:
