@@ -611,21 +611,23 @@ void MeshQuad::transfo_quad(int q, const glm::mat4& tr)
 	// generation de la matrice de transfo globale:
 	// indice utilisation de glm::inverse() et de local_frame
 
-    Mat4 LCS = local_frame(q);
-    Mat4 GCS = glm::inverse(tr) * LCS;
+    Mat4 M = glm::inverse(tr);
+    Mat4 T = M * local_frame(q);
 
+    //Mat4 GCS = M * LCS;
 
+    // je suis devenu fou sur cette question
+    // je n'ai pas trouvé..
+    // dans le .h on demande d'appliquer une transfo locale
+    // mais en indication on demande de calculer la transfo globale ?
 
-   // Mat4 M = glm::inverse(glm::inverse() * tr); // matrice de transfo du quad
-
-    Mat4 G = translate(centre.x, centre.y, centre.z) * tr * translate(-centre.x, -centre.y, -centre.z);
 
 	// Application au 4 points du quad
 
-    p1 = (Vec3)(GCS * Vec4(p1, 1));
-    p2 = (Vec3)(GCS * Vec4(p2, 1));
-    p3 = (Vec3)(GCS * Vec4(p3, 1));
-    p4 = (Vec3)(GCS * Vec4(p4, 1));
+    p1 = (Vec3)(T*Vec4(p1, 1));
+    p2 = (Vec3)(T*Vec4(p2, 1));
+    p3 = (Vec3)(T*Vec4(p3, 1));
+    p4 = (Vec3)(T*Vec4(p4, 1));
 
     gl_update();
 }
@@ -656,14 +658,35 @@ void MeshQuad::decale_quad(int q, float d)
     Vec3 centre = p1+p2+p3+p4;
     centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
 
-    Mat4 G = translate(centre.x, centre.y, centre.z) * translate(0, 0, d*distance) * translate(-centre.x, -centre.y, -centre.z);
+    Mat4 G = translate(centre.x, centre.y, centre.z) * translate(0, 0, (1+d)*distance) * translate(-centre.x, -centre.y, -centre.z);
 
     transfo_quad(q, G);
 }
 
 void MeshQuad::shrink_quad(int q, float s)
 {
-    transfo_quad(q, scale(1/s, 1/s, 1));
+    // recuperation des indices de points
+
+    int a = q * 4;
+
+    int ind1 = m_quad_indices[a];
+    int ind2 = m_quad_indices[a+1];
+    int ind3 = m_quad_indices[a+2];
+    int ind4 = m_quad_indices[a+3];
+
+    // recuperation des points
+
+    Vec3 p1 = m_points[ind1];
+    Vec3 p2 = m_points[ind2];
+    Vec3 p3 = m_points[ind3];
+    Vec3 p4 = m_points[ind4];
+
+    Vec3 centre = p1+p2+p3+p4;
+    centre = Vec3(centre.x/4, centre.y/4, centre.z/4);
+
+    Mat4 G = translate(centre.x, centre.y, centre.z) * scale(1/s, 1/s, 1) * translate(-centre.x, -centre.y, -centre.z);
+
+    transfo_quad(q, G);
 }
 
 void MeshQuad::tourne_quad(int q, float a)
