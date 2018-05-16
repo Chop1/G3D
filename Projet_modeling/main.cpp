@@ -41,7 +41,7 @@ void star(MeshQuad& m)
         {
             m.extrude_quad(i);
             //m.shrink_quad(i, 1.5);
-            m.tourne_quad(i, 5);
+            //m.tourne_quad(i, 5);
         }
     }
 }

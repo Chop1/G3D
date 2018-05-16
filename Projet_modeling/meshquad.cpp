@@ -188,47 +188,6 @@ Vec3 MeshQuad::multScal(const Vec3& A, const double& B)
     return Vec3(B*A.x, B*A.y, B*A.z);
 }
 
-/*
-// const, a, b on elimine b
-Vec3 MeshQuad::param2Cartesian(const Vec3& AX, const Vec3& AY, const Vec3& AZ)
-{
-    Vec3 AXtmp = (AX.x * AY.z, AX.y * AY.z, AX.z * AY.z);
-    int X = AY.z;
-    Vec3 AYtmp = (AY.x * AX.z, AY.y * AX.z, AY.z * AX.z);
-    int Y = AX.z;
-
-    Vec3 resTmp;
-
-    if((AXtmp.z > 0 && AYtmp.z < 0) || (AXtmp.z < 0 && AYtmp.z > 0)) // signe dif
-    {
-        resTmp = (AXtmp.x - AYtmp.x, AXtmp.y - AYtmp.y, AXtmp.z + AYtmp.z);
-    }
-    else // meme signe
-    {
-        resTmp = (AXtmp.x - AYtmp.x, AXtmp.y - AYtmp.y, AXtmp.z - AYtmp.z);
-    }
-
-    AYtmp = (AY.x * AZ.z, AY.y * AZ.z, AY.z * AZ.z);
-    int Y2 = AZ.z;
-    Vec3 AZtmp = (AZ.x * AY.z, AZ.y * AY.z, AZ.z * AY.z);
-    int X2 = AY.z;
-
-    var res2Tmp;
-
-    if((AYtmp.z > 0 && AZtmp.z < 0) || (AYtmp.z < 0 && AZtmp.z > 0)) // signe dif
-    {
-        res2Tmp = (AYtmp.x - AZtmp.x, AYtmp.y - AZtmp.y, AYtmp.z + AZtmp.z);
-    }
-    else // meme signe
-    {
-        res2Tmp = (AYtmp.x - AZtmp.x, AYtmp.y - AZtmp.y, AYtmp.z - AZtmp.z);
-    }
-
-    return Vec3(resTmp.x - res2Tmp.x, X-X2, Y-Y2);
-    // prob faut renvoyer 4 elements (Mat4 ?)
-}
-*/
-
 bool MeshQuad::is_points_in_tri(const Vec3& P, const Vec3& A, const Vec3& B, const Vec3& C)
 {// todo a revoir
 
@@ -373,8 +332,8 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
     Vec3 p3 = m_points[ind3];
     Vec3 p4 = m_points[ind4];
 
-    if(!is_points_in_quad(P, p1, p2, p3, p4))
-        return false;
+//    if(!is_points_in_quad(P, p1, p2, p3, p4))
+//        return false;
 
     std::cout << "quad " << q << " contient le point" << std::endl;
 
@@ -395,6 +354,10 @@ bool MeshQuad::intersect_ray_quad(const Vec3& P, const Vec3& Dir, int q, Vec3& i
 
         std::cout << "intersection en " << inter.x << ", " << inter.y << ", " << inter.z
                   << "\nt: " << t << std::endl;
+
+        if(!is_points_in_quad(inter, p1, p2, p3, p4))
+            return false;
+
         return true;
     }
 
